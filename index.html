@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ماشین‌حساب لات طلا</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="theme-color" content="#121512">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gold Lot">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: one column, inputs card then a result panel; result number dominates */
+  --bg: #f3f1ea;
+  --surface: #fffdf7;
+  --ink: #1d2320;
+  --muted: #6a6f68;
+  --line: #ddd8c9;
+  --accent: #a67c1a;
+  --accent-ink: #ffffff;
+  --good: #1f7a4d;
+  --bad: #b23a2e;
+  --warn: #9a6a00;
+  --font-body: "Vazirmatn", Tahoma, "Segoe UI", sans-serif;
+  --font-num: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121512;
+    --surface: #1b1f1b;
+    --ink: #ece8dc;
+    --muted: #9a9d94;
+    --line: #2d332d;
+    --accent: #d6a93c;
+    --accent-ink: #1a1405;
+    --good: #4cc48a;
+    --bad: #ec6b5e;
+    --warn: #e2b44a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121512;
+  --surface: #1b1f1b;
+  --ink: #ece8dc;
+  --muted: #9a9d94;
+  --line: #2d332d;
+  --accent: #d6a93c;
+  --accent-ink: #1a1405;
+  --good: #4cc48a;
+  --bad: #ec6b5e;
+  --warn: #e2b44a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 24px 16px 48px;
+}
+.wrap { max-width: 560px; margin: 0 auto; display: grid; gap: 16px; }
+header { display: grid; gap: 2px; }
+h1 { font-size: 22px; font-weight: 800; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); font-size: 13px; margin: 0; }
+.sym { font-family: var(--font-num); color: var(--accent); font-weight: 700; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+@media (max-width: 420px) { .row, .row3 { grid-template-columns: 1fr; } }
+
+.field { display: grid; gap: 4px; }
+label { font-size: 13px; font-weight: 500; color: var(--muted); }
+.opt { font-weight: 400; opacity: .8; }
+input[type="number"] {
+  width: 100%;
+  font-family: var(--font-num);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+}
+input[type="number"]:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button {
+  flex: 1;
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick button {
+  font-family: var(--font-num);
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.quick button:hover { border-color: var(--accent); }
+
+details { border-top: 1px dashed var(--line); padding-top: 12px; }
+summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+details .row3 { margin-top: 12px; }
+
+/* Result */
+.result { border: 2px solid var(--accent); gap: 12px; }
+.dir {
+  justify-self: start;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+.dir.buy { background: var(--good); }
+.dir.sell { background: var(--bad); }
+.dir.none { background: var(--muted); }
+.big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.lots {
+  font-family: var(--font-num);
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1;
+  direction: ltr;
+  font-variant-numeric: tabular-nums;
+}
+.lots-unit { font-size: 18px; font-weight: 700; color: var(--muted); }
+.copy {
+  margin-inline-start: auto;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin: 0; }
+.stats div { display: grid; gap: 0; }
+.stats dt { font-size: 12px; color: var(--muted); }
+.stats dd {
+  margin: 0;
+  font-family: var(--font-num);
+  font-size: 16px;
+  font-weight: 700;
+  direction: ltr;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pos { color: var(--good); }
+.neg { color: var(--bad); }
+.msg {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-inline-start: 3px solid var(--warn);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+}
+.msg.err { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+.msg:empty { display: none; }
+.tps { display: grid; gap: 8px; }
+.tp-row { display: grid; grid-template-columns: 34px 1fr 96px 32px; gap: 8px; align-items: center; }
+.tp-tag { font-family: var(--font-num); font-size: 13px; font-weight: 700; color: var(--accent); text-align: center; }
+.pct-wrap { position: relative; }
+.pct-wrap input { padding-left: 26px; }
+.pct-wrap span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-family: var(--font-num); font-size: 14px; pointer-events: none; }
+.del {
+  font: inherit; font-size: 18px; line-height: 1; width: 32px; height: 32px;
+  border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer;
+}
+.del:hover { color: var(--bad); border-color: var(--bad); }
+.del:disabled { opacity: .35; cursor: default; }
+.tp-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.add {
+  font: inherit; font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 8px;
+  border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer;
+}
+.add.ghost { border-color: var(--line); color: var(--muted); }
+.add:disabled { opacity: .4; cursor: default; }
+.sum { margin-inline-start: auto; font-size: 13px; }
+.sum bdi { font-family: var(--font-num); }
+.sum.ok { color: var(--good); }
+.sum.off { color: var(--bad); font-weight: 700; }
+.tbl-wrap { overflow-x: auto; }
+.tbl-wrap:empty, .tbl-wrap.hide { display: none; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tbl th { font-size: 12px; font-weight: 500; color: var(--muted); text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.tbl td { font-family: var(--font-num); font-variant-numeric: tabular-nums; padding: 6px; border-bottom: 1px solid var(--line); direction: ltr; text-align: right; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl td.na { color: var(--muted); }
+.foot { color: var(--muted); font-size: 12px; margin: 0; }
+.foot code { font-family: var(--font-num); direction: ltr; unicode-bidi: embed; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>ماشین‌حساب حجم معامله طلا</h1>
+    <p class="sub">برای <span class="sym">XAUUSD</span> · موجودی، ریسک و حد ضرر رو بزن، حجم دقیق رو تحویل بگیر</p>
+  </header>
+
+  <section class="card" aria-label="ورودی‌ها">
+    <div class="field">
+      <label for="balance">موجودی حساب (دلار)</label>
+      <input type="number" id="balance" inputmode="decimal" min="0" step="any" value="10000">
+    </div>
+
+    <div class="field">
+      <label id="riskModeLabel">نوع ریسک</label>
+      <div class="seg" role="group" aria-labelledby="riskModeLabel">
+        <button type="button" id="modePct" aria-pressed="true">درصد از حساب</button>
+        <button type="button" id="modeUsd" aria-pressed="false">مبلغ ثابت (دلار)</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="risk" id="riskLabel">ریسک (٪)</label>
+      <input type="number" id="risk" inputmode="decimal" min="0" step="any" value="1">
+      <div class="quick" id="quick">
+        <button type="button" data-v="0.5">0.5%</button>
+        <button type="button" data-v="1">1%</button>
+        <button type="button" data-v="2">2%</button>
+        <button type="button" data-v="3">3%</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="entry">قیمت ورود</label>
+        <input type="number" id="entry" inputmode="decimal" min="0" step="0.01" value="4000.00">
+      </div>
+      <div class="field">
+        <label for="sl">حد ضرر (SL)</label>
+        <input type="number" id="sl" inputmode="decimal" min="0" step="0.01" value="3990.00">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>حد سودها (TP) <span class="opt">· قیمت و درصدی از حجم که توی هر TP می‌بندی</span></label>
+      <div class="tps" id="tps"></div>
+      <div class="tp-actions">
+        <button type="button" class="add" id="addTp">+ اضافه کردن TP</button>
+        <button type="button" class="add ghost" id="evenTp">تقسیم مساوی</button>
+        <span class="sum" id="pctSum"></span>
+      </div>
+    </div>
+
+    <details>
+      <summary>تنظیمات بروکر</summary>
+      <div class="row3">
+        <div class="field">
+          <label for="contract">اونس در هر لات</label>
+          <input type="number" id="contract" min="0" step="any" value="100">
+        </div>
+        <div class="field">
+          <label for="step">گام لات</label>
+          <input type="number" id="step" min="0" step="any" value="0.01">
+        </div>
+        <div class="field">
+          <label for="minlot">حداقل لات</label>
+          <input type="number" id="minlot" min="0" step="any" value="0.01">
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card result" aria-live="polite" aria-label="نتیجه">
+    <span class="dir none" id="dir">—</span>
+    <div class="big">
+      <span class="lots" id="lots">0.00</span>
+      <span class="lots-unit">لات</span>
+      <button type="button" class="copy" id="copy">کپی</button>
+    </div>
+    <dl class="stats">
+      <div><dt>ریسک واقعی (بعد از گرد کردن)</dt><dd id="realRisk">—</dd></div>
+      <div><dt>ریسک هدف</dt><dd id="targetRisk">—</dd></div>
+      <div><dt>فاصله تا حد ضرر</dt><dd id="dist">—</dd></div>
+      <div><dt>ارزش هر ۱ دلار حرکت</dt><dd id="perDollar">—</dd></div>
+      <div><dt>سود کل (اگه همه‌ی TPها بخوره)</dt><dd id="profit">—</dd></div>
+      <div><dt>ریسک به ریوارد کل</dt><dd id="rr">—</dd></div>
+    </dl>
+    <div class="tbl-wrap" id="tpTableWrap">
+      <table class="tbl">
+        <thead><tr><th>TP</th><th>قیمت</th><th>لات</th><th>سود</th><th>R</th></tr></thead>
+        <tbody id="tpBody"></tbody>
+      </table>
+    </div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <p class="foot">
+    فرمول: <code>لات = ریسک دلاری ÷ (فاصله SL × اونس هر لات)</code> · در بیشتر بروکرها ۱ لات طلا = ۱۰۰ اونس، پس هر ۱ دلار حرکت قیمت با ۱ لات = ۱۰۰ دلار. حجم همیشه رو به پایین گرد می‌شه تا از ریسکت بیشتر نشه. اسپرد و کمیسیون حساب نشده.
+  </p>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var ids = ["balance", "risk", "entry", "sl", "contract", "step", "minlot"];
+  var mode = "pct";
+  var KEY = "gold-lot-calc-v2";
+  var MAX_TP = 5;
+  var tps = [
+    { price: "4010.00", pct: "50" },
+    { price: "4020.00", pct: "30" },
+    { price: "4030.00", pct: "20" }
+  ];
+
+  function num(id) { var v = parseFloat($(id).value); return isFinite(v) ? v : NaN; }
+  function f(v) { var x = parseFloat(v); return isFinite(x) ? x : NaN; }
+  function usd(v) {
+    var s = Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (v < 0 ? "-$" : "$") + s;
+  }
+  function decimals(step) { var s = String(step); return s.indexOf(".") >= 0 ? s.split(".")[1].length : 0; }
+
+  function renderTps() {
+    var box = $("tps");
+    box.innerHTML = "";
+    tps.forEach(function (t, i) {
+      var row = document.createElement("div");
+      row.className = "tp-row";
+      row.innerHTML =
+        '<span class="tp-tag">TP' + (i + 1) + '</span>' +
+        '<input type="number" id="tpPrice' + i + '" inputmode="decimal" min="0" step="0.01" aria-label="قیمت TP' + (i + 1) + '" placeholder="قیمت">' +
+        '<div class="pct-wrap"><input type="number" id="tpPct' + i + '" inputmode="decimal" min="0" max="100" step="any" aria-label="درصد حجم TP' + (i + 1) + '"><span>%</span></div>' +
+        '<button type="button" class="del" aria-label="حذف TP' + (i + 1) + '">×</button>';
+      box.appendChild(row);
+      var p = row.querySelector("#tpPrice" + i), q = row.querySelector("#tpPct" + i);
+      p.value = t.price; q.value = t.pct;
+      p.addEventListener("input", function () { tps[i].price = p.value; calc(); });
+      q.addEventListener("input", function () { tps[i].pct = q.value; calc(); });
+      var d = row.querySelector(".del");
+      d.disabled = tps.length <= 1;
+      d.addEventListener("click", function () { tps.splice(i, 1); renderTps(); calc(); });
+    });
+    $("addTp").disabled = tps.length >= MAX_TP;
+  }
+
+  function setMode(m) {
+    mode = m;
+    $("modePct").setAttribute("aria-pressed", m === "pct");
+    $("modeUsd").setAttribute("aria-pressed", m === "usd");
+    $("riskLabel").textContent = m === "pct" ? "ریسک (٪)" : "ریسک (دلار)";
+    $("quick").style.display = m === "pct" ? "flex" : "none";
+  }
+
+  function clearOut() {
+    ["realRisk", "targetRisk", "dist", "perDollar", "profit", "rr"].forEach(function (k) { $(k).textContent = "—"; $(k).className = ""; });
+    $("tpBody").innerHTML = "";
+    $("tpTableWrap").classList.add("hide");
+  }
+
+  function calc() {
+    var bal = num("balance"), risk = num("risk"), entry = num("entry"), sl = num("sl");
+    var contract = num("contract"), step = num("step"), minlot = num("minlot");
+    var msg = $("msg");
+    msg.className = "msg"; msg.textContent = "";
+
+    // percent sum indicator
+    var pctSum = tps.reduce(function (a, t) { var x = f(t.pct); return a + (x > 0 ? x : 0); }, 0);
+    var sumEl = $("pctSum");
+    sumEl.innerHTML = "جمع: <bdi dir=\"ltr\">" + (Math.round(pctSum * 100) / 100) + "%</bdi>";
+    sumEl.className = "sum " + (Math.abs(pctSum - 100) < 1e-6 ? "ok" : "off");
+
+    var riskUsd = mode === "pct" ? bal * risk / 100 : risk;
+    var dist = Math.abs(entry - sl);
+    var dirEl = $("dir");
+    var buy = sl < entry;
+    if (isFinite(entry) && isFinite(sl) && entry !== sl) {
+      dirEl.className = "dir " + (buy ? "buy" : "sell");
+      dirEl.textContent = buy ? "خرید · Buy" : "فروش · Sell";
+    } else { dirEl.className = "dir none"; dirEl.textContent = "—"; }
+
+    var bad = !(bal > 0) || !(risk > 0) || !(entry > 0) || !(sl > 0) || !(contract > 0) || !(step > 0);
+    if (bad || dist === 0) {
+      $("lots").textContent = "0.00";
+      clearOut();
+      msg.className = "msg err";
+      msg.textContent = dist === 0 && !bad ? "قیمت ورود و حد ضرر نباید یکی باشن." : "همه‌ی فیلدها رو با عدد بزرگ‌تر از صفر پر کن.";
+      save(); return;
+    }
+
+    var raw = riskUsd / (dist * contract);
+    var lots = Math.floor(raw / step + 1e-9) * step;
+    var dp = Math.max(2, decimals(step));
+    var realRisk = lots * dist * contract;
+    var notes = [], isErr = false;
+
+    if (lots < minlot - 1e-9) {
+      isErr = true;
+      notes.push("با این ریسک حتی حداقل حجم (" + minlot + " لات) هم زیاده. حداقل لات ریسکی برابر " + usd(minlot * dist * contract) + " داره؛ یا ریسک رو بیشتر کن یا حد ضرر رو نزدیک‌تر بذار.");
+      lots = 0; realRisk = 0;
+    }
+
+    $("lots").textContent = lots.toFixed(dp);
+    $("targetRisk").textContent = usd(riskUsd) + (mode === "pct" ? "" : "  (" + (riskUsd / bal * 100).toFixed(2) + "%)");
+    $("realRisk").textContent = usd(realRisk) + "  (" + (realRisk / bal * 100).toFixed(2) + "%)";
+    $("realRisk").className = "neg";
+    $("dist").textContent = "$" + dist.toFixed(2) + "  ·  " + (dist * 10).toFixed(0) + " pip";
+    $("perDollar").textContent = usd(lots * contract);
+
+    // TP split: allocate in lot steps, rounding down; remainder goes to last valid TP
+    var valid = tps.map(function (t, i) {
+      var price = f(t.price), pct = f(t.pct);
+      var gain = buy ? price - entry : entry - price;
+      return { i: i, price: price, pct: pct, gain: gain, ok: price > 0 && pct > 0 && gain > 0 };
+    });
+    var wrongSide = valid.filter(function (v) { return f(tps[v.i].price) > 0 && v.gain <= 0; });
+    if (wrongSide.length) notes.push("TP" + wrongSide.map(function (v) { return v.i + 1; }).join("، TP") + " سمت اشتباهه: برای " + (buy ? "خرید باید بالای قیمت ورود" : "فروش باید پایین قیمت ورود") + " باشه.");
+    if (Math.abs(pctSum - 100) > 1e-6) notes.push("جمع درصدهای TP باید ۱۰۰٪ باشه (الان " + (Math.round(pctSum * 100) / 100) + "٪). محاسبه به نسبت همین درصدها انجام شده.");
+
+    var okList = valid.filter(function (v) { return v.ok; });
+    var okPct = okList.reduce(function (a, v) { return a + v.pct; }, 0);
+    var totalSteps = Math.round(lots / step);
+    var used = 0;
+    okList.forEach(function (v, k) {
+      var s = k === okList.length - 1 ? totalSteps - used : Math.floor(totalSteps * v.pct / okPct + 1e-9);
+      v.lots = s * step; used += s;
+    });
+
+    var body = $("tpBody");
+    body.innerHTML = "";
+    var totalProfit = 0, tooSmall = [];
+    valid.forEach(function (v) {
+      var tr = document.createElement("tr");
+      if (v.ok) {
+        var profit = v.lots * v.gain * contract;
+        totalProfit += profit;
+        if (lots > 0 && v.lots < minlot - 1e-9) tooSmall.push(v.i + 1);
+        tr.innerHTML = "<td>TP" + (v.i + 1) + "</td><td>" + v.price.toFixed(2) + "</td><td>" + v.lots.toFixed(dp) +
+          '</td><td class="pos">' + usd(profit) + "</td><td>" + (v.gain / dist).toFixed(2) + "R</td>";
+      } else {
+        tr.innerHTML = "<td>TP" + (v.i + 1) + '</td><td class="na" colspan="4">—</td>';
+      }
+      body.appendChild(tr);
+    });
+    $("tpTableWrap").classList.toggle("hide", tps.length === 0);
+    if (tooSmall.length) notes.push("حجم TP" + tooSmall.join("، TP") + " از حداقل لات کمتر شده؛ درصدها رو عوض کن یا تعداد TPها رو کم کن.");
+
+    if (okList.length && lots > 0) {
+      $("profit").textContent = usd(totalProfit);
+      $("profit").className = "pos";
+      $("rr").textContent = "1 : " + (totalProfit / realRisk).toFixed(2);
+    } else {
+      $("profit").textContent = "—"; $("profit").className = ""; $("rr").textContent = "—";
+    }
+
+    if (!isErr && mode === "pct" && risk > 3) notes.push("ریسک بالای ۳٪ در هر معامله خیلی تهاجمیه.");
+    msg.className = "msg" + (isErr ? " err" : "");
+    msg.textContent = notes.join(" ");
+    save();
+  }
+
+  function save() {
+    try {
+      var o = { mode: mode, tps: tps };
+      ids.forEach(function (k) { o[k] = $(k).value; });
+      localStorage.setItem(KEY, JSON.stringify(o));
+    } catch (e) {}
+  }
+  function load() {
+    try {
+      var o = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (!o) return;
+      ids.forEach(function (k) { if (o[k] != null) $(k).value = o[k]; });
+      if (o.mode) setMode(o.mode);
+      if (Array.isArray(o.tps) && o.tps.length) tps = o.tps.slice(0, MAX_TP);
+    } catch (e) {}
+  }
+
+  ids.forEach(function (k) { $(k).addEventListener("input", calc); });
+  $("modePct").addEventListener("click", function () { if (mode !== "pct") { setMode("pct"); $("risk").value = 1; calc(); } });
+  $("modeUsd").addEventListener("click", function () {
+    if (mode !== "usd") {
+      var bal = num("balance"), r = num("risk");
+      setMode("usd");
+      if (bal > 0 && r > 0) $("risk").value = (bal * r / 100).toFixed(2);
+      calc();
+    }
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("#quick button"), function (b) {
+    b.addEventListener("click", function () { $("risk").value = b.getAttribute("data-v"); calc(); });
+  });
+  $("addTp").addEventListener("click", function () {
+    if (tps.length >= MAX_TP) return;
+    var last = tps[tps.length - 1], entry = num("entry"), sl = num("sl");
+    var price = "";
+    if (last && f(last.price) > 0 && entry > 0 && sl > 0) {
+      var d = Math.abs(entry - sl), dir = sl < entry ? 1 : -1;
+      price = (f(last.price) + dir * d).toFixed(2);
+    }
+    tps.push({ price: price, pct: "0" });
+    renderTps(); calc();
+  });
+  $("evenTp").addEventListener("click", function () {
+    var n = tps.length, base = Math.floor(100 / n);
+    tps.forEach(function (t, i) { t.pct = String(i === n - 1 ? 100 - base * (n - 1) : base); });
+    renderTps(); calc();
+  });
+  $("copy").addEventListener("click", function () {
+    var t = $("lots").textContent;
+    try {
+      navigator.clipboard.writeText(t).then(function () {
+        $("copy").textContent = "کپی شد ✓";
+        setTimeout(function () { $("copy").textContent = "کپی"; }, 1400);
+      }, function () {});
+    } catch (e) {}
+  });
+
+  load();
+  setMode(mode);
+  renderTps();
+  calc();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+}
+</script>
+</body>
+</html>
